@@ -1,29 +1,24 @@
-name: Releases
+name: Format the code
+
 on:
   push:
-    branches:
-      - main
+  pull_request:
 
 jobs:
-  changelog:
+  format:
     runs-on: ubuntu-latest
-
+    name: Format Files
     steps:
       - uses: actions/checkout@v3
-
-      - name: conventional Changelog Action
-        id: changelog
-        uses: TriPSs/conventional-changelog-action@v3.7.1
+      - uses: actions/setup-node@v3
         with:
-          github-token: ${{ secrets.GH_PAT }}
-          version-file: './releases.json'
-
-      - name: create release
-        uses: actions/create-release@v1
-        if: ${{ steps.changelog.outputs.skipped == 'false' }}
+          node-version: "16"
+      - run: npm ci
+      - name: Prettier
+        run: npx prettier --write *.js
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
         with:
-          tag_name: ${{ steps.changelog.outputs.tag }}
-          release_name: ${{ steps.changelog.outputs.tag }}
-          body: ${{ steps.changelog.outputs.clean_changelog }}
+          commit_message: "style: format files"
